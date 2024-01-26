@@ -14,8 +14,10 @@
   "dependencies": {
     "@tensorflow-models/coco-ssd": "^2.2.2",
     "@tensorflow-models/mobilenet": "^2.1.0",
+    "@tensorflow/tfjs": "^4.12.0",
     "@tensorflow/tfjs-node": "3.6",
     "busboy": "^1.6.0",
+    "canvas": "^2.11.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
