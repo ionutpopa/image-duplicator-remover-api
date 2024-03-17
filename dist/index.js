@@ -14,71 +14,90 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-const dotenv_1 = require("dotenv");
-require("@tensorflow/tfjs-node");
+const loadModel_1 = require("./src/utils/loadModel");
+const processes_1 = require("./src/generate-embeddings/processes");
+const formatLogs_1 = __importDefault(require("./src/utils/formatLogs"));
 const multer_1 = __importDefault(require("multer"));
-const processes_1 = require("./src/processes/processes");
-(0, dotenv_1.config)();
+const remove_duplicate_embeddings_1 = require("./src/remove-duplicate-embeddings/remove-duplicate-embeddings");
 const app = (0, express_1.default)();
+const PORT = 3000; // Choose the port you want to run your server on
+// Enable CORS
 app.use((0, cors_1.default)());
-const PORT = process.env.PORT || 5000;
+// TODO in PRODUCTION: Make sure to add the origin in cors
+// app.use(cors({
+//     origin: 'http://your-react-app-domain.com',
+//     // other options if needed
+//   }));
+// Middleware for parsing multipart/form-data
+const upload = (0, multer_1.default)();
+// Middleware to parse JSON request bodies
 app.use(express_1.default.json());
-const storage = multer_1.default.memoryStorage();
-const upload = (0, multer_1.default)({ storage });
-app.post("/upload", upload.array("images"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
-    if (!((_a = req === null || req === void 0 ? void 0 : req.headers["content-type"]) === null || _a === void 0 ? void 0 : _a.startsWith("multipart/form-data"))) {
-        res.status(400).send("Incorrect content-type header");
-        return;
-    }
-    if (((_b = req === null || req === void 0 ? void 0 : req.files) === null || _b === void 0 ? void 0 : _b.length) === 0) {
-        res.status(400).send("No files uploaded.");
-        return;
-    }
+let imagesProcessed;
+// Define the POST endpoint for image processing
+app.post('/image-processing', upload.array('images'), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        let stop = false;
-        const buffers = (_c = req === null || req === void 0 ? void 0 : req.files) === null || _c === void 0 ? void 0 : _c.map((file) => file === null || file === void 0 ? void 0 : file.buffer);
-        const probabilities = [];
-        for (let i = 0; i < (buffers === null || buffers === void 0 ? void 0 : buffers.length); i++) {
-            const image = buffers[i];
-            const probabilitiesFromMobileNet = yield (0, processes_1.predictImage)(image);
-            probabilities === null || probabilities === void 0 ? void 0 : probabilities.push(probabilitiesFromMobileNet);
-            if (!stop) {
-                stop = true;
-            }
+        imagesProcessed = [];
+        // Load Model
+        const model = yield (0, loadModel_1.loadModel)();
+        // Assuming the image data comes from a multiform with images. This variable will return Buffers
+        const imageDataArray = (_a = req.files) === null || _a === void 0 ? void 0 : _a.map((file) => {
+            return file === null || file === void 0 ? void 0 : file.buffer;
+        });
+        if ((imageDataArray === null || imageDataArray === void 0 ? void 0 : imageDataArray.length) === 1) {
+            imagesProcessed = [imageDataArray[0]];
+            return res.status(200).json({ message: "Images Processed" });
         }
-        if (stop) {
-            const combinedProbabilitiesAndBuffers = [];
-            probabilities === null || probabilities === void 0 ? void 0 : probabilities.forEach((prediction, predictionIndex) => {
-                buffers === null || buffers === void 0 ? void 0 : buffers.forEach((buffer, bufferIndex) => {
-                    if (predictionIndex === bufferIndex) {
-                        combinedProbabilitiesAndBuffers === null || combinedProbabilitiesAndBuffers === void 0 ? void 0 : combinedProbabilitiesAndBuffers.push({
-                            prediction,
-                            buffer,
-                        });
-                    }
-                });
+        let imageBuffersAndEmbeddings = [];
+        // Process each image
+        const embeddings = yield Promise.all(imageDataArray === null || imageDataArray === void 0 ? void 0 : imageDataArray.map((imageData) => __awaiter(void 0, void 0, void 0, function* () {
+            // Decode base64 image data
+            const imageBuffer = Buffer.from(imageData, 'base64');
+            // Pass image through the model to generate embeddings
+            const embeddings = (0, processes_1.generateEmbeddings)(imageBuffer, model);
+            imageBuffersAndEmbeddings.push({
+                buffer: imageBuffer,
+                embeddings: yield embeddings
             });
-            // We sort the array by the className
-            const sortedCombinedProbabilitiesAndBuffers = combinedProbabilitiesAndBuffers === null || combinedProbabilitiesAndBuffers === void 0 ? void 0 : combinedProbabilitiesAndBuffers.sort((a, b) => {
-                var _a, _b, _c, _d, _e, _f, _g, _h;
-                if (((_b = (_a = a === null || a === void 0 ? void 0 : a.prediction) === null || _a === void 0 ? void 0 : _a[0]) === null || _b === void 0 ? void 0 : _b.className) < ((_d = (_c = b === null || b === void 0 ? void 0 : b.prediction) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.className)) {
-                    return -1;
-                }
-                if (((_f = (_e = a === null || a === void 0 ? void 0 : a.prediction) === null || _e === void 0 ? void 0 : _e[0]) === null || _f === void 0 ? void 0 : _f.className) > ((_h = (_g = b === null || b === void 0 ? void 0 : b.prediction) === null || _g === void 0 ? void 0 : _g[0]) === null || _h === void 0 ? void 0 : _h.className)) {
-                    return 1;
-                }
-                return 0;
-            });
-            const results = (0, processes_1.doMagicAIStuff)(sortedCombinedProbabilitiesAndBuffers);
-            res.status(200).send(results);
+            // Return embeddings
+            return embeddings;
+        })));
+        // Sort embeddings from lowest to highest
+        embeddings.sort();
+        const threshold = (0, remove_duplicate_embeddings_1.chooseThreshold)(embeddings); // Threshold for similarity
+        const filteredEmbeddings = (0, remove_duplicate_embeddings_1.removeDuplicates)(embeddings, threshold);
+        const newImages = filteredEmbeddings.map((embedding) => {
+            var _a;
+            // Here we search for the image with that embedding to return it to the client but idk if this comparation works
+            // We are comparing Array of array to another Array of array
+            return (_a = imageBuffersAndEmbeddings.find((image) => image.embeddings === embedding)) === null || _a === void 0 ? void 0 : _a.buffer;
+        });
+        if (newImages) {
+            imagesProcessed = newImages;
+            // console.log('We have images registered');
         }
+        else {
+            // console.log('No images found for the given embedding.');
+        }
+        // Send embeddings
+        res.status(200).json({ message: "Images Processed" });
     }
     catch (error) {
-        console.log(error);
-        res.status(500).json({ error: "Error processing images" });
+        (0, formatLogs_1.default)('error', error);
+        console.error('Error processing images:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 }));
+app.get('/display-images', (req, res) => {
+    // Assuming imageData is the buffer containing the image data
+    const imageDataArray = imagesProcessed; // Assuming you have the image buffer in req.files[0].data
+    console.log("imagesProcessed", imagesProcessed.length);
+    // Set the appropriate content type header for an image
+    res.setHeader('Content-Type', 'application/json'); // Adjust the content type based on your image format
+    // Send the image data buffer as the response
+    res.send(JSON.stringify(imageDataArray));
+});
+// Start the server
 app.listen(PORT, () => {
-    console.log(`Server started on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });

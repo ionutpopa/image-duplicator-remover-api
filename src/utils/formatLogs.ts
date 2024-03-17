@@ -4,7 +4,7 @@ const colors = {
   error: "\x1b[31m", // Red
 };
 
-function formatLog(
+function logger(
   level: "info" | "warning" | "error",
   message: string
 ) {
@@ -13,4 +13,4 @@ function formatLog(
   console.log(`[${timestamp}] ${color}[${level.toUpperCase()}]: ${message}\x1b[0m`);
 };
 
-export default formatLog;
+export default logger;
