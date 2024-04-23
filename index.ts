@@ -1,79 +1,53 @@
-import express from "express";
-import cors from "cors";
-import { config } from "dotenv";
-import "@tensorflow/tfjs-node";
-import multer from "multer";
-import { doMagicAIStuff, predictImage } from "./src/processes/processes";
-import { PredictionsTypes, ProbabilityTypes } from "./src/types/processes";
+// Step 1: Import dependencies
+import express from 'express';
+import multer from 'multer';
+// import * as tf from '@tensorflow/tfjs';
+import * as tfNode from "@tensorflow/tfjs-node";
+import * as mobilenet from '@tensorflow-models/mobilenet';
+import * as knnClassifier from '@tensorflow-models/knn-classifier';
 
-config();
+// Step 2: Initialize Express app and configure Multer
 const app = express();
+const upload = multer({ dest: 'uploads/' });
 
-app.use(cors());
+// Step 3: Initialize TensorFlow.js
+let mobilenetModel: mobilenet.MobileNet;
+let classifier;
 
-const PORT = process.env.PORT || 5000;
+async function loadModels() {
+  mobilenetModel = await mobilenet.load();
+  classifier = await knnClassifier.create();
+}
 
-app.use(express.json());
+loadModels();
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-app.post("/upload", upload.array("images"), async (req, res) => {
-  if (!req?.headers["content-type"]?.startsWith("multipart/form-data")) {
-    res.status(400).send("Incorrect content-type header");
-    return;
-  }
-
-  if (req?.files?.length === 0) {
-    res.status(400).send("No files uploaded.");
-    return;
-  }
-
+// Step 4: Define endpoint for processing images
+app.post('/process-image', upload.single('image'), async (req, res) => {
   try {
-    const buffers = (req?.files as any[])?.map((file) => file?.buffer);
-
-    const probabilities = [];
-
-    for (let i = 0; i < buffers?.length; i++) {
-      const image = buffers[i];
-      const probabilitiesFromMobileNet = await predictImage(image);
-      probabilities?.push(probabilitiesFromMobileNet);
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image uploaded' });
     }
 
-    const combinedProbabilitiesAndBuffers: PredictionsTypes[] = [];
+    const imageBuffer = req.file.buffer;
+    const img = tfNode.decodeImage(imageBuffer);
 
-    probabilities?.forEach((prediction: ProbabilityTypes[] | null, predictionIndex) => {
-      buffers?.forEach((buffer, bufferIndex) => {
-        if (predictionIndex === bufferIndex) {
-          combinedProbabilitiesAndBuffers?.push({
-            prediction,
-            buffer,
-          });
-        }
-      });
-    });
+    // Generate embedding for the image
+    const embeddings = await mobilenetModel.infer(img, 'conv_preds');
 
-    // We sort the array by the className
-    const sortedCombinedProbabilitiesAndBuffers = combinedProbabilitiesAndBuffers?.sort((a, b) => {
-      if ((a?.prediction as ProbabilityTypes[])?.[0]?.className < (b?.prediction as ProbabilityTypes[])?.[0]?.className) {
-        return -1;
-      }
-      if ((a?.prediction as ProbabilityTypes[])?.[0]?.className > (b?.prediction as ProbabilityTypes[])?.[0]?.className) {
-        return 1;
-      }
-      return 0;
-    });
+    // Compare embeddings and remove similar ones
+    // Here you would implement your comparison algorithm
+    // and remove similar embeddings
 
-    const results = doMagicAIStuff(sortedCombinedProbabilitiesAndBuffers);
-
-
-    res.status(200).send(results);
+    // Send response with processed data
+    res.status(200).json({ message: 'Image processed successfully' });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Error processing images" });
+    console.error('Error processing image:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
+// Step 5: Start the server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
