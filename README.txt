@@ -1,0 +1,1 @@
+After running yarn add to install all packages, run this command for windows: yarn add --global windows-build-tools

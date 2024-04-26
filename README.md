@@ -1,1 +1,0 @@
-Image Removal API!
