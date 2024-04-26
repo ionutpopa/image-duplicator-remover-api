@@ -35,7 +35,7 @@ app.post('/image-processing', upload.array('images'), (req, res) => __awaiter(vo
     try {
         // Get the images from the request
         const images = req.files;
-        const processedImages = yield (0, process_images_1.processImages)(images);
+        (0, process_images_1.processImages)(images);
         res.send({
             message: 'Images processed successfully',
         });

@@ -16,11 +16,21 @@ export const filterSimilarities = async () => {
     // Create a new array to store the filtered embeddings
     const filteredEmbeddings = [];
 
-    // Calculate pairwise distances between embeddings
-    const distances = math.zeros(embeddings.length, embeddings.length);
+    // Calculate pairwise cosine similarity
     for (let i = 0; i < embeddings.length; i++) {
-        for (let j = 0; j < embeddings.length; j++) {
-            console.log("distances", distances)
+        for (let j = i + 1; j < embeddings.length; j++) {
+            const similarity = math.dot(embeddings[i], embeddings[j]) / ((math.norm(embeddings[i]) as number) * (math.norm(embeddings[j]) as number));
+
+            console.log("similarity", similarity)
+
+            // If the similarity is greater than 0.9, add it to the filtered embeddings
+            if (similarity > 0.9) {
+                filteredEmbeddings.push({
+                    image1: filenames[i],
+                    image2: filenames[j],
+                    similarity,
+                });
+            }
         }
     }
 };

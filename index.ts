@@ -32,7 +32,7 @@ app.post('/image-processing', upload.array('images'), async (req, res) => {
         // Get the images from the request
         const images = req.files as Express.Multer.File[];
     
-        const processedImages = await processImages(images);
+        processImages(images);
             
         res.send({
             message: 'Images processed successfully',
