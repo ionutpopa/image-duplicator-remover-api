@@ -1,9 +1,9 @@
 import fs from 'fs';
-import { spawn } from 'child_process'
+import { runPythonScript } from '../utils/runPythonScript';
+import logger from '../utils/formatLogs';
+import { filterSimilarities } from '../filter-similarities/filter-similarities';
 
 export const processImages = async (images: Express.Multer.File[]) => {
-    const pythonProcess = spawn('python3', ['./processor.py']);
-    
     // Create a json file to store all the buffers
     const jsonFile = fs.createWriteStream('buffers.json');
 
@@ -13,7 +13,7 @@ export const processImages = async (images: Express.Multer.File[]) => {
     images.forEach((image, index) => {
         jsonFile.write(JSON.stringify({
             filename: image.originalname,
-            buffer: image.buffer,
+            buffer: image.buffer?.toString('base64'),
         }));
 
         // Add a comma if it's not the last image
@@ -25,18 +25,29 @@ export const processImages = async (images: Express.Multer.File[]) => {
     jsonFile.write(']');
 
     // Close the json file
-    jsonFile.end();
+    jsonFile.close(async () => {
+        // Log that the json file has been closed
+        logger('JSON file closed');
+        
+        // Run the python script
+        const result = await runPythonScript('src/process/processor.py');
 
-    // Execute the python script
-    pythonProcess.stdout.on('data', (data) => {
-        // console.log(`stdout: ${data}`);
-    })
+        if (result === 0) {
+            logger('Python script exited successfully');
 
-    pythonProcess.stderr.on('data', (data) => {
-        // console.error(`stderr: ${data}`);
-    })
+            // Filter the similarities from the embeddings.json file
+            filterSimilarities();
+        } else {
+            logger('Python script exited with an error', 'error');
+        }
 
-    pythonProcess.on('close', (code) => {
-        // console.log(`child process exited with code ${code}`);
+        // Delete the json file
+        fs.unlink('buffers.json', (error) => {
+            if (error) {
+                logger(`Error deleting json file: ${error}`, 'error');
+            } else {
+                logger('JSON file deleted');
+            }
+        });
     })
 }

@@ -6,11 +6,11 @@ const colors = {
   
   function logger(
     message: string,
-    level: "info" | "warning" | "error"
+    level?: "info" | "warning" | "error"
   ) {
     const timestamp = new Date().toISOString();
-    const color = colors?.[level] || "\x1b[0m"; // Default to no color
-    console.log(`[${timestamp}] ${color}[${level.toUpperCase()}]: ${message}\x1b[0m`);
+    const color = colors?.[level || 'info'] || "\x1b[0m"; // Default to no color
+    console.log(`[${timestamp}] ${color}[${(level || "info").toUpperCase()}]: ${message}\x1b[0m`);
   };
   
   export default logger;

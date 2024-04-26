@@ -7,8 +7,8 @@ const colors = {
 };
 function logger(message, level) {
     const timestamp = new Date().toISOString();
-    const color = (colors === null || colors === void 0 ? void 0 : colors[level]) || "\x1b[0m"; // Default to no color
-    console.log(`[${timestamp}] ${color}[${level.toUpperCase()}]: ${message}\x1b[0m`);
+    const color = (colors === null || colors === void 0 ? void 0 : colors[level || 'info']) || "\x1b[0m"; // Default to no color
+    console.log(`[${timestamp}] ${color}[${(level || "info").toUpperCase()}]: ${message}\x1b[0m`);
 }
 ;
 exports.default = logger;
