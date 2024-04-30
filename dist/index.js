@@ -62,23 +62,25 @@ app.post('/image-processing', upload.array('images'), (req, res) => __awaiter(vo
             // Return embeddings
             return embeddings;
         })));
-        // Sort embeddings from lowest to highest
-        embeddings.sort();
+        (0, formatLogs_1.default)('info', `Embeddings: ${embeddings.length}`);
+        (0, formatLogs_1.default)('info', `Embeddings dimensionality: ${embeddings[0].length}`);
+        const batchSize = 2;
+        (0, formatLogs_1.default)('info', `Batch size: ${batchSize}`);
         const threshold = (0, remove_duplicate_embeddings_1.chooseThreshold)(embeddings); // Threshold for similarity
-        const filteredEmbeddings = (0, remove_duplicate_embeddings_1.removeDuplicates)(embeddings, threshold);
-        const newImages = filteredEmbeddings.map((embedding) => {
-            var _a;
-            // Here we search for the image with that embedding to return it to the client but idk if this comparation works
-            // We are comparing Array of array to another Array of array
-            return (_a = imageBuffersAndEmbeddings.find((image) => image.embeddings === embedding)) === null || _a === void 0 ? void 0 : _a.buffer;
-        });
-        if (newImages) {
-            imagesProcessed = newImages;
-            // console.log('We have images registered');
-        }
-        else {
-            // console.log('No images found for the given embedding.');
-        }
+        console.log('Threshold:', threshold);
+        const filteredEmbeddings = (0, remove_duplicate_embeddings_1.removeSimilarEmbeddings)(embeddings, threshold);
+        console.log(filteredEmbeddings);
+        // const newImages = filteredEmbeddings.map((embedding) => {
+        //     // Here we search for the image with that embedding to return it to the client but idk if this comparation works
+        //     // We are comparing Array of array to another Array of array
+        //     return imageBuffersAndEmbeddings.find((image) => image.embeddings === embedding)?.buffer
+        // })
+        // if (newImages) {
+        //     imagesProcessed = newImages;
+        //     // console.log('We have images registered');
+        // } else {
+        //     // console.log('No images found for the given embedding.');
+        // }
         // Send embeddings
         res.status(200).json({ message: "Images Processed" });
     }
@@ -88,15 +90,15 @@ app.post('/image-processing', upload.array('images'), (req, res) => __awaiter(vo
         res.status(500).json({ error: 'Internal server error' });
     }
 }));
-app.get('/display-images', (req, res) => {
-    // Assuming imageData is the buffer containing the image data
-    const imageDataArray = imagesProcessed; // Assuming you have the image buffer in req.files[0].data
-    console.log("imagesProcessed", imagesProcessed.length);
-    // Set the appropriate content type header for an image
-    res.setHeader('Content-Type', 'application/json'); // Adjust the content type based on your image format
-    // Send the image data buffer as the response
-    res.send(JSON.stringify(imageDataArray));
-});
+// app.get('/display-images', (req, res) => {
+//     // Assuming imageData is the buffer containing the image data
+//     const imageDataArray = imagesProcessed; // Assuming you have the image buffer in req.files[0].data
+//     console.log("imagesProcessed", imagesProcessed.length)
+//     // Set the appropriate content type header for an image
+//     res.setHeader('Content-Type', 'application/json'); // Adjust the content type based on your image format
+//     // Send the image data buffer as the response
+//     res.send(JSON.stringify(imageDataArray));
+// });
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

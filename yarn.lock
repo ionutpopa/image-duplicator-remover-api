@@ -337,6 +337,11 @@
     "@types/node" "*"
     form-data "^4.0.0"
 
+"@types/node-kmeans@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.npmjs.org/@types/node-kmeans/-/node-kmeans-1.1.2.tgz"
+  integrity sha512-cuZNsuSU0QzTUzWbZWAGnEaQwOdCYhvuJlhz4Tgua8S9P7o5vobtVBx1mnwVMqCyWeW3JPuqWvWbQWV4jeZoWg==
+
 "@types/node@*", "@types/node@^20.4.2", "@types/node@>=13.7.0":
   version "20.4.2"
   resolved "https://registry.npmjs.org/@types/node/-/node-20.4.2.tgz"
@@ -1581,6 +1586,13 @@ node-fetch@^2.6.7, node-fetch@~2.6.1:
   dependencies:
     whatwg-url "^5.0.0"
 
+node-kmeans@^1.1.9:
+  version "1.1.9"
+  resolved "https://registry.npmjs.org/node-kmeans/-/node-kmeans-1.1.9.tgz"
+  integrity sha512-qZiuD4ab4cvsSWQSccWzLb4j1cHlm6wjGiWrbhCPZweVzpfcWBQ2CMqK4YBtJJ3OhK27NkZ1PKiLlZ52Z///cQ==
+  dependencies:
+    underscore "^1.9.1"
+
 node-pre-gyp@0.14.0:
   version "0.14.0"
   resolved "https://registry.npmjs.org/node-pre-gyp/-/node-pre-gyp-0.14.0.tgz"
@@ -2386,6 +2398,11 @@ undefsafe@^2.0.5:
   version "2.0.5"
   resolved "https://registry.npmjs.org/undefsafe/-/undefsafe-2.0.5.tgz"
   integrity sha512-WxONCrssBM8TSPRqN5EmsjVrsv4A8X12J4ArBiiayv3DyyG3ZlIg6yysuuSYdZsVz3TKcTg2fd//Ujd4CHV1iA==
+
+underscore@^1.9.1:
+  version "1.13.6"
+  resolved "https://registry.npmjs.org/underscore/-/underscore-1.13.6.tgz"
+  integrity sha512-+A5Sja4HP1M08MaXya7p5LvjuM7K6q/2EaC0+iovj/wOcMsTzMvDFbasi/oSapiwOlt252IqsKqPjCl7huKS0A==
 
 unpipe@~1.0.0, unpipe@1.0.0:
   version "1.0.0"
