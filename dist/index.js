@@ -17,12 +17,11 @@ const cors_1 = __importDefault(require("cors"));
 const formatLogs_1 = __importDefault(require("./src/utils/formatLogs"));
 const multer_1 = __importDefault(require("multer"));
 const process_images_1 = require("./src/process/process-images");
-const redis_1 = require("redis");
-global.REDIS_CLIENT = (0, redis_1.createClient)({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-});
-global.REDIS_CLIENT.connect();
+// global.REDIS_CLIENT = createClient({
+//     host: process.env.REDIS_HOST,
+//     port: process.env.REDIS_PORT,
+//   } as any)
+// global.REDIS_CLIENT.connect()
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 // Middleware for parsing multipart/form-data

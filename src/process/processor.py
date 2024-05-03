@@ -7,7 +7,7 @@ from PIL import Image
 import io
 
 # Load the buffers.json file
-with open('../../buffers.json', 'r') as f:
+with open('buffers.json', 'r') as f:
     data = json.load(f)
 
 # Load the pre-trained ResNet-50 model
@@ -42,7 +42,7 @@ for item in data:
     del item['buffer']
 
 # Save the updated data to a new JSON file
-with open('../../embeddings.json', 'w') as f:
+with open('embeddings.json', 'w') as f:
     json.dump(data, f)
 
 # Close the script

@@ -8,12 +8,12 @@ import { Global } from './src/types/global/global';
 
 declare let global: Global
 
-global.REDIS_CLIENT = createClient({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-  } as any)
+// global.REDIS_CLIENT = createClient({
+//     host: process.env.REDIS_HOST,
+//     port: process.env.REDIS_PORT,
+//   } as any)
 
-global.REDIS_CLIENT.connect()
+// global.REDIS_CLIENT.connect()
 
 const app = express();
 const PORT = process.env.PORT || 3000;

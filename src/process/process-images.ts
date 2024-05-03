@@ -32,13 +32,35 @@ export const processImages = async (images: Express.Multer.File[]) => {
         // Run the python script
         const result = await runPythonScript('src/process/processor.py');
 
-        console.log("result", result)
-
         if (result === 0) {
             logger('Python script exited successfully');
 
             // Filter the similarities from the embeddings.json file
-            filterSimilarities();
+            const filteredEmbeddings = await filterSimilarities();
+
+            if (filteredEmbeddings.length > 0) {
+                logger('Filtered embeddings');
+
+                // Delete the embeddings.json file
+                fs.unlink('embeddings.json', (error) => {
+                    if (error) {
+                        logger(`Error deleting embeddings file: ${error}`, 'error');
+                    } else {
+                        logger('Embeddings file deleted');
+                    }
+                });
+
+                // Save the filtered embeddings to a json file
+                const filteredEmbeddingsFile = fs.createWriteStream('filteredEmbeddings.json');
+
+                filteredEmbeddingsFile.write(JSON.stringify(filteredEmbeddings));
+
+                filteredEmbeddingsFile.close(() => {
+                    logger('Filtered embeddings saved to a json file');
+                });
+            } else {
+                logger('No similar images found');
+            }
 
             // Delete the json file
             fs.unlink('buffers.json', (error) => {

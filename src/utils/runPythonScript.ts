@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 
 export const runPythonScript = async (script: string) => {
     return new Promise((resolve, reject) => {
-        const pythonProcess = spawn('python3', [script])
+        const pythonProcess = spawn('python', [script])
 
         pythonProcess.stdout.on('data', (data) => {
             console.log(`stdout: ${data}`)
