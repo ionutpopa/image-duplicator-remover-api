@@ -1,104 +1,48 @@
 import express from 'express';
 import cors from 'cors';
-import { loadModel } from './src/utils/loadModel';
-import { generateEmbeddings } from './src/generate-embeddings/processes';
 import logger from './src/utils/formatLogs';
 import multer from 'multer';
-import { chooseThreshold, removeDuplicates } from './src/remove-duplicate-embeddings/remove-duplicate-embeddings';
+import { processImages } from './src/process/process-images';
+import { createClient } from 'redis';
+import { Global } from './src/types/global/global';
+
+declare let global: Global
+
+// global.REDIS_CLIENT = createClient({
+//     host: process.env.REDIS_HOST,
+//     port: process.env.REDIS_PORT,
+//   } as any)
+
+// global.REDIS_CLIENT.connect()
 
 const app = express();
-const PORT = 3000; // Choose the port you want to run your server on
-
-// Enable CORS
-app.use(cors());
-
-// TODO in PRODUCTION: Make sure to add the origin in cors
-// app.use(cors({
-//     origin: 'http://your-react-app-domain.com',
-//     // other options if needed
-//   }));
+const PORT = process.env.PORT || 3000;
 
 // Middleware for parsing multipart/form-data
 const upload = multer();
 
-// Middleware to parse JSON request bodies
+// Enable CORS
+app.use(cors());
+
+// Use JSON
 app.use(express.json());
 
-let imagesProcessed: any[];
-
-// Define the POST endpoint for image processing
 app.post('/image-processing', upload.array('images'), async (req, res) => {
     try {
-        imagesProcessed = [];
-        // Load Model
-        const model = await loadModel()
-
-        // Assuming the image data comes from a multiform with images. This variable will return Buffers
-        const imageDataArray: string[] = (req.files as any[])?.map((file: { buffer: any; }) => {
-            return file?.buffer
-        })
-
-        if (imageDataArray?.length === 1) {
-            imagesProcessed = [imageDataArray[0]];
-            return res.status(200).json({ message: "Images Processed" });
-        }
-
-        let imageBuffersAndEmbeddings: { buffer: Buffer; embeddings: number[]; }[] = []
-        
-        // Process each image
-        const embeddings = await Promise.all(imageDataArray?.map(async (imageData: string) => {
-            // Decode base64 image data
-            const imageBuffer = Buffer.from(imageData, 'base64');
-
-            // Pass image through the model to generate embeddings
-            const embeddings = generateEmbeddings(imageBuffer, model);
-            imageBuffersAndEmbeddings.push({
-                buffer: imageBuffer,
-                embeddings: await embeddings
-            })
+        // Get the images from the request
+        const images = req.files as Express.Multer.File[];
+    
+        processImages(images);
             
-            // Return embeddings
-            return embeddings;
-        }));
-        
-        // Sort embeddings from lowest to highest
-        embeddings.sort();
-        
-        const threshold = chooseThreshold(embeddings); // Threshold for similarity
-        const filteredEmbeddings = removeDuplicates(embeddings, threshold);
-
-        const newImages = filteredEmbeddings.map((embedding) => {
-            // Here we search for the image with that embedding to return it to the client but idk if this comparation works
-            // We are comparing Array of array to another Array of array
-            return imageBuffersAndEmbeddings.find((image) => image.embeddings === embedding)?.buffer
+        res.send({
+            message: 'Images processed successfully',
         })
-
-        if (newImages) {
-            imagesProcessed = newImages;
-            // console.log('We have images registered');
-        } else {
-            // console.log('No images found for the given embedding.');
-        }
-
-        // Send embeddings
-        res.status(200).json({ message: "Images Processed" });
     } catch (error) {
-        logger('error', error as string)
-        console.error('Error processing images:', error);
+        const errorMessage = JSON.stringify(error, Object.getOwnPropertyNames(error));
+        logger(errorMessage, 'error');
         res.status(500).json({ error: 'Internal server error' });
     }
-});
-
-app.get('/display-images', (req, res) => {
-    // Assuming imageData is the buffer containing the image data
-    const imageDataArray = imagesProcessed; // Assuming you have the image buffer in req.files[0].data
-    console.log("imagesProcessed", imagesProcessed.length)
-    // Set the appropriate content type header for an image
-    res.setHeader('Content-Type', 'application/json'); // Adjust the content type based on your image format
-
-    // Send the image data buffer as the response
-    res.send(JSON.stringify(imageDataArray));
-});
+})
 
 // Start the server
 app.listen(PORT, () => {
