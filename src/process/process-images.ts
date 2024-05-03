@@ -32,22 +32,24 @@ export const processImages = async (images: Express.Multer.File[]) => {
         // Run the python script
         const result = await runPythonScript('src/process/processor.py');
 
+        console.log("result", result)
+
         if (result === 0) {
             logger('Python script exited successfully');
 
             // Filter the similarities from the embeddings.json file
             filterSimilarities();
+
+            // Delete the json file
+            fs.unlink('buffers.json', (error) => {
+                if (error) {
+                    logger(`Error deleting json file: ${error}`, 'error');
+                } else {
+                    logger('JSON file deleted');
+                }
+            });
         } else {
             logger('Python script exited with an error', 'error');
         }
-
-        // Delete the json file
-        fs.unlink('buffers.json', (error) => {
-            if (error) {
-                logger(`Error deleting json file: ${error}`, 'error');
-            } else {
-                logger('JSON file deleted');
-            }
-        });
     })
 }
