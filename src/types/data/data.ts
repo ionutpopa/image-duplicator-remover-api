@@ -7,3 +7,8 @@ export type FilteredDataType = {
     imageToRemoveName: string; 
     similarity: number 
 }[];
+
+export type FilteredImagesType = {
+    name: string;
+    buffer?: string;
+}
