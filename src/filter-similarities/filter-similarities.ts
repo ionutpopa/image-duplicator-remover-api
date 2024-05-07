@@ -1,12 +1,17 @@
 import fs from 'fs';
 import logger from '../utils/formatLogs';
 import { DataType, FilteredDataType } from '../types/data/data';
+import { sortData } from '../sort/sort';
 
+/**
+ * Filter the similarities from the embeddings.json file and save the filtered embeddings to a new file called filteredEmbeddings.json
+ * @returns A promise that resolves to an array of data
+ */
 export const filterSimilarities = async () => {
-    return new Promise<DataType[]>((resolve, reject) => {
-        // Read the embeddings.json file
-        const data = JSON.parse(fs.readFileSync('embeddings.json', 'utf-8')) as DataType[]
+    // Read the embeddings.json file
+    const data = await sortData();
 
+    return new Promise<string[]>((resolve, reject) => {
         const embeddings = data.map((item) => item.embedding);
         const filenames = data.map((item) => item.filename);
 
@@ -59,7 +64,7 @@ export const filterSimilarities = async () => {
 
         if (filteredEmbeddings?.length) {
             logger('Filtered embeddings', 'info');
-            const newEmbeddings = data.filter((item) => !filteredEmbeddings.some((filteredItem) => filteredItem.imageToRemoveName === item.filename));
+            const newEmbeddings = data.filter((item) => !filteredEmbeddings.some((filteredItem) => filteredItem.imageToRemoveName === item.filename)).map((item) => item.filename)
             resolve(newEmbeddings)
         } else {
             logger('No similar images found', 'error');

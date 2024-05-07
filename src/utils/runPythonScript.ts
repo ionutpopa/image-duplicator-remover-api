@@ -7,7 +7,13 @@ import { spawn } from "child_process";
  */
 export const runPythonScript = async (script: string) => {
     return new Promise((resolve, reject) => {
-        const pythonProcess = spawn('python', [script])
+        let pythonProcess;
+
+        if (process.env.OS === 'windows') {
+            pythonProcess = spawn('python', [script])
+        } else {
+            pythonProcess = spawn('python3', [script])
+        }
 
         pythonProcess.stdout.on('data', (data) => {
             console.log(`stdout: ${data}`)

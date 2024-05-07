@@ -5,15 +5,16 @@ import multer from 'multer';
 import { processImages } from './src/process/process-images';
 import { createClient } from 'redis';
 import { Global } from './src/types/global/global';
+import { getFilteredImages } from './src/filter/get-filtered-images';
 
-declare let global: Global
+declare const global: Global
 
-// global.REDIS_CLIENT = createClient({
-//     host: process.env.REDIS_HOST,
-//     port: process.env.REDIS_PORT,
-//   } as any)
+global.REDIS_CLIENT = createClient({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+} as any)
 
-// global.REDIS_CLIENT.connect()
+global.REDIS_CLIENT.connect()
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,11 +38,28 @@ app.post('/image-processing', upload.array('images'), async (req, res) => {
     try {
         // Get the images from the request
         const images = req.files as Express.Multer.File[];
-    
+
         processImages(images);
-            
+
         res.send({
-            message: 'Images processed successfully',
+            message: 'Images processing started',
+        })
+    } catch (error) {
+        const errorMessage = JSON.stringify(error, Object.getOwnPropertyNames(error));
+        logger(errorMessage, 'error');
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
+
+/**
+ * Route to get the filtered images
+ */
+app.get('/filtered-images', async (req, res) => {
+    try {
+        const filteredImages = await getFilteredImages();
+
+        res.send({
+            filteredImages: filteredImages,
         })
     } catch (error) {
         const errorMessage = JSON.stringify(error, Object.getOwnPropertyNames(error));

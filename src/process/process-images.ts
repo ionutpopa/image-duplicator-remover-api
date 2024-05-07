@@ -2,6 +2,9 @@ import fs from 'fs';
 import { runPythonScript } from '../utils/runPythonScript';
 import logger from '../utils/formatLogs';
 import { filterSimilarities } from '../filter-similarities/filter-similarities';
+import { Global } from '../types/global/global';
+
+declare const global: Global;
 
 /**
  * This function processes the images and stores the embeddings remaining after filtering in a JSON file
@@ -24,6 +27,11 @@ export const processImages = async (images: Express.Multer.File[]) => {
             filename: image.originalname,
             buffer: image.buffer?.toString('base64'),
         }));
+
+        // We are going to save the original buffer in the redis cache, so we can use it later, when we need to show the image
+        global.REDIS_CLIENT.set(image.originalname, image.buffer?.toString('base64'), {
+            EX: 60 * 60 * 1, // 1 hour
+        });
 
         // Add a comma if it's not the last image
         if (index !== images.length - 1) {
