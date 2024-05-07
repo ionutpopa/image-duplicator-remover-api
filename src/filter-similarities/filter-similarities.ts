@@ -1,13 +1,9 @@
 import fs from 'fs';
 import logger from '../utils/formatLogs';
-
-type DataType = {
-    filename: string;
-    embedding: number[];
-};
+import { DataType, FilteredDataType } from '../types/data/data';
 
 export const filterSimilarities = async () => {
-    return new Promise<any[]>((resolve, reject) => {
+    return new Promise<DataType[]>((resolve, reject) => {
         // Read the embeddings.json file
         const data = JSON.parse(fs.readFileSync('embeddings.json', 'utf-8')) as DataType[]
 
@@ -15,7 +11,7 @@ export const filterSimilarities = async () => {
         const filenames = data.map((item) => item.filename);
 
         // Create a new array to store the filtered embeddings
-        const filteredEmbeddings: { imageToRemoveName: string; similarity: number }[] = [];
+        const filteredEmbeddings: FilteredDataType = [];
 
         // Calculate pairwise cosine similarity
         for (let i = 0; i < embeddings.length; i++) {

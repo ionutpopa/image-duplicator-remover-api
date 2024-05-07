@@ -27,6 +27,12 @@ app.use(cors());
 // Use JSON
 app.use(express.json());
 
+/**
+ * Route to process the images
+ * This route will process the images and store the embeddings remaining after filtering in a JSON file
+ * The images that came from the request are multipart/form-data
+ * @param {Express.Multer.File[]} images - The images to process
+ */
 app.post('/image-processing', upload.array('images'), async (req, res) => {
     try {
         // Get the images from the request

@@ -3,6 +3,15 @@ import { runPythonScript } from '../utils/runPythonScript';
 import logger from '../utils/formatLogs';
 import { filterSimilarities } from '../filter-similarities/filter-similarities';
 
+/**
+ * This function processes the images and stores the embeddings remaining after filtering in a JSON file
+ * It works by writting the filename and buffer of each image into a JSON file called buffers.json
+ * Then it runs a python script to process the images - This script uses buffers.json to create embeddings for each using PyTorch image and stores them in a file called embeddings.json
+ * After the python script has finished, it filters the similarities from the embeddings.json file by running the filterSimilarities function
+ * If there are any similarities, it saves them to a JSON file called filteredEmbeddings.json
+ * Finally, it deletes the JSON file and the embeddings.json file
+ * @param images - The images to process
+ */
 export const processImages = async (images: Express.Multer.File[]) => {
     // Create a json file to store all the buffers
     const jsonFile = fs.createWriteStream('buffers.json');

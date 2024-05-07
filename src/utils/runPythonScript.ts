@@ -1,5 +1,10 @@
 import { spawn } from "child_process";
 
+/**
+ * Run a python script
+ * @param script - The path to the python script
+ * @returns - Promise
+ */
 export const runPythonScript = async (script: string) => {
     return new Promise((resolve, reject) => {
         const pythonProcess = spawn('python', [script])
