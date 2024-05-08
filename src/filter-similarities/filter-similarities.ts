@@ -9,7 +9,9 @@ import { sortData } from '../sort/sort';
  */
 export const filterSimilarities = async () => {
     // Read the embeddings.json file
-    const data = await sortData();
+
+    // TODO: use the following code instead of the next line when sorting will use a different strategy: const data = await sortData();
+    const data = JSON.parse(fs.readFileSync('embeddings.json', 'utf-8')) as DataType[];
 
     return new Promise<string[]>((resolve, reject) => {
         const embeddings = data.map((item) => item.embedding);
